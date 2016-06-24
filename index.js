@@ -1,4 +1,3 @@
-var http = require('http')
 var crypto = require('crypto')
 var pump = require('pump')
 var TimeoutStream = require('through-timeout')
@@ -7,34 +6,24 @@ var mime = require('mime')
 var rangeParser = require('range-parser')
 var JSONStream = require('JSONStream')
 
-var PORT = process.env.PORT || 8080
-
 module.exports = HyperdriveHttp
 
-function HyperdriveHttp (getArchive, opts) {
-  if (!opts) opts = {}
-  opts.port = opts.port || PORT
-
-  var server = this.server = http.createServer()
-  server.listen(opts.port, function () {
-    console.log('Server is listening on port ' + opts.port)
-  })
-  server.on('request', function (req, res) {
+function HyperdriveHttp (getArchive) {
+  var onrequest = function (req, res) {
     var dat = parse(req.url)
     if (!dat) return onerror(404, res)
     getArchive(dat, function (err, archive) {
       if (err) return onerror(err)
       archiveResponse(archive, req, res)
     })
-  })
-  return server
+  }
+
+  return onrequest
 }
 
 function archiveResponse (archive, req, res) {
-  if (!archive) {
-    console.error('no archive')
-    process.exit(0)
-  }
+  if (!archive) onerror(404, res)
+
   var dat = parse(req.url)
 
   if (!dat.filename) {

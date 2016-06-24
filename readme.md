@@ -1,23 +1,32 @@
 # Hyperdrive Http
 
-Serve a Hyperdrive over HTTP. 
+Handle Hyperdrive HTTP Requests
+
+Expects you to:
+* Bring your own http server
+* Manage your own hyperdrive archives
+* Connect to the swarm before callback
 
 ## Usage
 
 ```javascript
 var hyperdriveHttp = require('hyperdrive-http')
 
-var opts = {port: 8000}
 var getArchive = function (datInfo, cb) {
-  var archive = cache.get(dat.discoveryKey)
+  // find the archive to serve
+  var archive = cache.get(datInfo.discoveryKey)
   if (!archive) {
-    archive = drive.createArchive(dat.key, {file: file})
+    archive = drive.createArchive(datInfo.key)
+    // connect to swarm, if necessary
     sw.join(archive.discoveryKey)
   }
-  cb(null, archive) // callback with your archive
+  cb(null, archive) // callback with your found archive
 }
 
-var server = hyperdriveHttp(getArchive, opts)
+var onrequest = hyperdriveHttp(getArchive)
+var server = http.createServer()
+server.listen(8000)
+server.on('request', onrequest)
 ```
 
 Pass an archive lookup function for the first argument of `hyperdriveHttp`. The function is called with `datInfo` and a callback.

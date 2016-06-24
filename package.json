@@ -1,10 +1,10 @@
 {
   "name": "hyperdrive-http",
   "version": "1.0.0",
-  "description": "serve a hyperdrive over http",
+  "description": "Handle Hyperdrive HTTP Requests",
   "main": "index.js",
   "scripts": {
-    "test": "standard && tape test/*.js | tap-spec"
+    "test": "standard && echo 'Error: no test specified'"
   },
   "author": "Joe Hand <joe@joeahand.com> (http://joeahand.com/)",
   "license": "ISC",
@@ -15,7 +15,7 @@
     "pump": "^1.0.1",
     "range-parser": "^1.2.0",
     "through-timeout": "^1.0.0"
-  }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/joehand/hyperdrive-http.git"
