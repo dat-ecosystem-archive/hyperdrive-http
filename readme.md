@@ -4,7 +4,7 @@ Serve a Hyperdrive over HTTP.
 
 ## Usage
 
-```
+```javascript
 var hyperdriveHttp = require('hyperdrive-http')
 
 var opts = {port: 8000}
@@ -22,7 +22,7 @@ var server = hyperdriveHttp(getArchive, opts)
 
 Pass an archive lookup function for the first argument of `hyperdriveHttp`. The function is called with `datInfo` and a callback.
 
-```
+```javascript
 datInfo = {
   key: archive.key,
   discoveryKey: archive.discoveryKey,
