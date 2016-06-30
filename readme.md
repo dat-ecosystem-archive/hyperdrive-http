@@ -20,7 +20,8 @@ var hyperdriveHttp = require('hyperdrive-http')
 
 var getArchive = function (datInfo, cb) {
   // find the archive to serve
-  var archive = cache.get(datInfo.discoveryKey)
+  var discoveryKey = crypto.createHmac('sha256', Buffer(datInfo.key, 'hex')).update('hypercore').digest('hex')
+  var archive = cache.get(discoveryKey)
   if (!archive) {
     archive = drive.createArchive(datInfo.key)
     // connect to swarm, if necessary
@@ -40,7 +41,6 @@ Pass an archive lookup function for the first argument of `hyperdriveHttp`. The 
 ```javascript
 datInfo = {
   key: archive.key,
-  discoveryKey: archive.discoveryKey,
-  filename: someFile.txt,
+  filename: someFile.txt
 }
 ```
