@@ -8,7 +8,16 @@ var JSONStream = require('JSONStream')
 
 module.exports = HyperdriveHttp
 
+var singleArchive = false
+
 function HyperdriveHttp (getArchive) {
+  if (typeof (getArchive) !== 'function') {
+    var archive = getArchive
+    singleArchive = true
+    getArchive = function (dat, cb) {
+      cb(null, archive)
+    }
+  }
   var onrequest = function (req, res) {
     var dat = parse(req.url)
     if (!dat) return onerror(404, res)
@@ -69,9 +78,9 @@ function onerror (status, res) {
 
 function parse (url) {
   var key = url.slice(1, 65)
-  if (!/^[0-9a-f]{64}$/.test(key)) return null
-
   var filename = url.slice(66)
+  if (!/^[0-9a-f]{64}$/.test(key) && !singleArchive) return null
+  else if (singleArchive) filename = url.slice(1)
 
   return {
     key: key,

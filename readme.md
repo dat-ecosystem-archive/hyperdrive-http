@@ -9,6 +9,12 @@ Expects you to:
 
 ## Usage
 
+Initiate with an archive lookup function:
+`var onrequest = hyperdriveHttp(getArchive)`
+
+or pass a single archive:
+`var onrequest = hyperdriveHttp(archive)`
+
 ```javascript
 var hyperdriveHttp = require('hyperdrive-http')
 
