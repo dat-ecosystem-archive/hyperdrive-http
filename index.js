@@ -5,6 +5,7 @@ var mime = require('mime')
 var rangeParser = require('range-parser')
 var ndjson = require('ndjson')
 var encoding = require('dat-encoding')
+var through = require('through2')
 
 module.exports = HyperdriveHttp
 
@@ -56,6 +57,15 @@ function HyperdriveHttp (getArchive) {
 
 function archiveResponse (datUrl, archive, req, res) {
   if (!archive) onerror(404, res)
+
+  if (!archive.metadata) {
+    var src = archive.createReadStream({live: false})
+    var stringify = JSONStream.stringify('[', ',', ']\n', 2)
+    res.setHeader('Content-Type', 'application/json')
+    return pump(src, through.obj(function(chunk, enc, cb) {
+      cb(null, JSON.parse(chunk.toString()))
+    }), stringify, res)
+  }
 
   if (!datUrl.filename) {
     var src = archive.list({live: datUrl.op === 'changes'})
