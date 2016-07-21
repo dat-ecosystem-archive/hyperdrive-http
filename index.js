@@ -38,6 +38,7 @@ function HyperdriveHttp (getArchive) {
     if (/\.changes$/.test(key)) {
       key = key.slice(0, -8)
       op = 'changes'
+      if (singleArchive) url = url.slice(0, -8)
     }
 
     try {
@@ -72,7 +73,7 @@ function archiveResponse (datUrl, archive, req, res) {
     res.setHeader('Content-Type', 'application/json')
     if (archive.metadata) return pump(src, timeout, ndjson.serialize(), res)
     return pump(src, timeout, through.obj(function (chunk, enc, cb) {
-      cb(null, JSON.parse(chunk.toString()))
+      cb(null, chunk.toString())
     }), ndjson.serialize(), res)
   }
 
