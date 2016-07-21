@@ -1,6 +1,6 @@
 # Hyperdrive Http
 
-Serve a [hyperdrive](https://github.com/mafintosh/hyperdrive) archive files & metadata over HTTP. For an example of use, see [dat.haus](https://github.com/juliangruber/dat.haus).
+Serve a [hyperdrive](https://github.com/mafintosh/hyperdrive) archive or [hypercore](https://github.com/mafintosh/hypercore) feed over HTTP. For an example of use, see [dat.haus](https://github.com/juliangruber/dat.haus).
 
 ## Usage
 
@@ -25,6 +25,10 @@ Hyperdrive-http responds to any URL with a specific format. If the URL does cann
 * Get metadata for archive: `http://archive-example.com/`
 * Get file from archive: `http://archive-example.com/filename.pdf`
 
+#### Hypercore Mode
+
+For hypercore feeds, the data is available with the same logic as above for a single or multiple feeds.
+
 ### Setup
 
 To use hyperdrive-http you will need to:
@@ -34,15 +38,16 @@ To use hyperdrive-http you will need to:
 
 ### API
 
-Hyperdrive works with either a archive lookup function or a single archive:
+Hyperdrive works with many archives/feeds or a single archive. 
+
+#### Multiple Archives
+
+If you have multiple archives, you will need to look the archive to return using the key.
 
 Initiate with an archive lookup function:
 `var onrequest = hyperdriveHttp(getArchive)`
 
-or pass a single archive:
-`var onrequest = hyperdriveHttp(archive)`
-
-The archive lookup function would look like this:
+The archive lookup function may look like this:
 
 ```js
 var getArchive = function (datInfo, cb) {
@@ -62,6 +67,18 @@ var getArchive = function (datInfo, cb) {
   cb(null, archive) // callback with your found archive
 }
 ```
+
+#### Single Archive
+Hyperdrive-http works great with a single archive too. It exposes the metadata at the root path and files are available without using the key.
+
+Pass a single archive on initiation:
+`var onrequest = hyperdriveHttp(archive)`
+
+Now your archive metadata will be available at http://example.com/
+
+#### Hypercore Feed(s)
+You can also use a hypercore feed: `hyperdriveHttp(feed)` (or using a similar getArchive function)
+
 
 ## Example
 
