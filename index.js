@@ -5,6 +5,7 @@ var mime = require('mime')
 var rangeParser = require('range-parser')
 var ndjson = require('ndjson')
 var encoding = require('dat-encoding')
+var through = require('through2')
 
 module.exports = HyperdriveHttp
 
@@ -57,8 +58,9 @@ function HyperdriveHttp (getArchive) {
 function archiveResponse (datUrl, archive, req, res) {
   if (!archive) onerror(404, res)
 
-  if (!datUrl.filename) {
-    var src = archive.list({live: datUrl.op === 'changes'})
+  if (!datUrl.filename || !archive.metadata) {
+    var opts = {live: datUrl.op === 'changes'}
+    var src = archive.metadata ? archive.list(opts) : archive.createReadStream(opts)
     var timeout = TimeoutStream({
       objectMode: true,
       duration: 10000
@@ -66,7 +68,12 @@ function archiveResponse (datUrl, archive, req, res) {
       onerror(404, res)
       src.destroy()
     })
-    pump(src, timeout, ndjson.serialize(), res)
+
+    res.setHeader('Content-Type', 'application/json')
+    if (archive.metadata) return pump(src, timeout, ndjson.serialize(), res)
+    return pump(src, timeout, through.obj(function (chunk, enc, cb) {
+      cb(null, JSON.parse(chunk.toString()))
+    }), ndjson.serialize(), res)
   }
 
   archive.get(datUrl.filename, cbTimeout((err, entry) => {
