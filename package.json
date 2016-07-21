@@ -19,7 +19,8 @@
     "ndjson": "^1.4.3",
     "pump": "^1.0.1",
     "range-parser": "^1.2.0",
-    "through-timeout": "^1.0.0"
+    "through-timeout": "^1.0.0",
+    "through2": "^2.0.1"
   },
   "repository": {
     "type": "git",

@@ -58,8 +58,9 @@ function HyperdriveHttp (getArchive) {
 function archiveResponse (datUrl, archive, req, res) {
   if (!archive) onerror(404, res)
 
-  if (!archive.metadata || !datUrl.filename) {
-    var src = archive.metadata ? archive.list({live: false}) : archive.createReadStream({live: false})
+  if (!datUrl.filename || !archive.metadata) {
+    var opts = {live: datUrl.op === 'changes'}
+    var src = archive.metadata ? archive.list(opts) : archive.createReadStream(opts)
     var timeout = TimeoutStream({
       objectMode: true,
       duration: 10000
@@ -68,8 +69,9 @@ function archiveResponse (datUrl, archive, req, res) {
       src.destroy()
     })
 
-    if (archive.metadata) return pump(src, timeout, ndjson.serialize(), res)')
-    return pump(src, timeout, through.obj(function(chunk, enc, cb) {
+    res.setHeader('Content-Type', 'application/json')
+    if (archive.metadata) return pump(src, timeout, ndjson.serialize(), res)
+    return pump(src, timeout, through.obj(function (chunk, enc, cb) {
       cb(null, JSON.parse(chunk.toString()))
     }), ndjson.serialize(), res)
   }
