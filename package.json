@@ -6,8 +6,12 @@
   "scripts": {
     "test": "standard && echo 'Error: no test specified'"
   },
-  "author": "Joe Hand <joe@joeahand.com> (http://joeahand.com/)",
-  "license": "ISC",
+  "keywords": [
+    "hyperdrive",
+    "dat"
+  ],
+  "author": "Joe Hand <joe@hand.email>",
+  "license": "MIT",
   "dependencies": {
     "callback-timeout": "^2.1.0",
     "dat-encoding": "^2.0.2",
