@@ -11,24 +11,6 @@ var server = http.createServer()
 server.on('request', hyperdriveHttp(archive))
 ```
 
-### URL Format
-
-Hyperdrive-http responds to any URL with a specific format. If the URL does cannot be parsed, it will return a 404.
-
-#### Multiple archives on one site
-
-* Get metadata for archive: `http://dat.haus/dat.haus/c5dbfe5521d8dddba683544ee4b1c7f6ce1c7b23bd387bd850397e4aaf9afbd9/`
-* Get file from archive: `http://dat.haus/dat.haus/c5dbfe5521d8dddba683544ee4b1c7f6ce1c7b23bd387bd850397e4aaf9afbd9/filename.pdf`
-
-#### Single Archive Mode
-
-* Get metadata for archive: `http://archive-example.com/`
-* Get file from archive: `http://archive-example.com/filename.pdf`
-
-#### Hypercore Mode
-
-For hypercore feeds, the data is available with the same logic as above for a single or multiple feeds.
-
 ### Setup
 
 To use hyperdrive-http you will need to:
@@ -78,6 +60,24 @@ Now your archive metadata will be available at http://example.com/
 
 #### Hypercore Feed(s)
 You can also use a hypercore feed: `hyperdriveHttp(feed)` (or using a similar getArchive function)
+
+### URL Format
+
+Hyperdrive-http responds to any URL with a specific format. If the URL does cannot be parsed, it will return a 404.
+
+#### Multiple archives on one site
+
+* Get metadata for archive: `http://dat.haus/c5dbfe5521d8dddba683544ee4b1c7f6ce1c7b23bd387bd850397e4aaf9afbd9/`
+* Get file from archive: `http://dat.haus/c5dbfe5521d8dddba683544ee4b1c7f6ce1c7b23bd387bd850397e4aaf9afbd9/filename.pdf`
+
+#### Single Archive Mode
+
+* Get metadata for archive: `http://archive-example.com/`
+* Get file from archive: `http://archive-example.com/filename.pdf`
+
+#### Hypercore Mode
+
+For hypercore feeds, the data is available with the same logic as above for a single or multiple feeds.
 
 
 ## Example
