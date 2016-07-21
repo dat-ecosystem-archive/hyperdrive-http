@@ -58,7 +58,7 @@ function archiveResponse (datUrl, archive, req, res) {
   if (!archive) onerror(404, res)
 
   if (!datUrl.filename) {
-    var src = archive.list({live: op === 'changes'})
+    var src = archive.list({live: datUrl.op === 'changes'})
     var timeout = TimeoutStream({
       objectMode: true,
       duration: 10000
