@@ -32,6 +32,13 @@ function HyperdriveHttp (getArchive) {
     var segs = url.split('/').filter(Boolean)
     var key = segs[0]
     var filename = segs[1]
+
+    var op = 'get'
+    if (/\.changes$/.test(key)) {
+      key = key.slice(0, -8)
+      op = 'changes'
+    }
+
     try {
       encoding.decode(key)
     } catch (_) {
@@ -41,7 +48,8 @@ function HyperdriveHttp (getArchive) {
 
     return {
       key: key,
-      filename: filename
+      filename: filename,
+      op: op
     }
   }
 }
@@ -50,7 +58,7 @@ function archiveResponse (datUrl, archive, req, res) {
   if (!archive) onerror(404, res)
 
   if (!datUrl.filename) {
-    var src = archive.list({live: false})
+    var src = archive.list({live: op === 'changes'})
     var timeout = TimeoutStream({
       objectMode: true,
       duration: 10000
