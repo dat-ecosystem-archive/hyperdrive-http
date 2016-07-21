@@ -3,7 +3,7 @@ var TimeoutStream = require('through-timeout')
 var cbTimeout = require('callback-timeout')
 var mime = require('mime')
 var rangeParser = require('range-parser')
-var JSONStream = require('JSONStream')
+var ndjson = require('ndjson')
 var encoding = require('dat-encoding')
 
 module.exports = HyperdriveHttp
@@ -58,8 +58,7 @@ function archiveResponse (datUrl, archive, req, res) {
       onerror(404, res)
       src.destroy()
     })
-    var stringify = JSONStream.stringify('[', ',', ']\n', 2)
-    pump(src, timeout, stringify, res)
+    pump(src, timeout, ndjson.serialize(), res)
   }
 
   archive.get(datUrl.filename, cbTimeout((err, entry) => {
