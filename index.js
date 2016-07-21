@@ -4,6 +4,7 @@ var cbTimeout = require('callback-timeout')
 var mime = require('mime')
 var rangeParser = require('range-parser')
 var JSONStream = require('JSONStream')
+var encoding = require('dat-encoding')
 
 module.exports = HyperdriveHttp
 
@@ -28,10 +29,15 @@ function HyperdriveHttp (getArchive) {
   return onrequest
 
   function parse (url) {
-    var key = url.slice(1, 65)
-    var filename = url.slice(66)
-    if (!/^[0-9a-f]{64}$/.test(key) && !singleArchive) return null
-    else if (singleArchive) filename = url.slice(1)
+    var segs = url.split('/').filter(Boolean)
+    var key = segs[0]
+    var filename = segs[1]
+    try {
+      encoding.decode(key)
+    } catch (_) {
+      if (!singleArchive) return null
+    }
+    if (singleArchive) filename = url.slice(1)
 
     return {
       key: key,
