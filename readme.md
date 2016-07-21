@@ -2,6 +2,8 @@
 
 Serve a [hyperdrive](https://github.com/mafintosh/hyperdrive) archive or [hypercore](https://github.com/mafintosh/hypercore) feed over HTTP. For an example of use, see [dat.haus](https://github.com/juliangruber/dat.haus).
 
+[![Travis](https://api.travis-ci.org/joehand/hyperdrive-http.svg)](https://travis-ci.org/joehand/hyperdrive-http)
+
 ## Usage
 
 Hyperdrive-http returns a function to call when you receive a http request:
