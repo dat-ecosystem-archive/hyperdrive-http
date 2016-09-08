@@ -15,14 +15,17 @@ function HyperdriveHttp (getArchive) {
     var archive = getArchive
     singleArchive = true
     getArchive = function (datUrl, cb) {
-      cb(null, archive)
+      cb(null, archive, true)
     }
   }
   var onrequest = function (req, res) {
     var datUrl = parse(req.url)
     if (!datUrl) return onerror(404, res)
     getArchive(datUrl, function (err, archive) {
-      if (err) return onerror(err)
+      if (err) {
+        console.error(err)
+        return onerror(404, res)
+      }
       archiveResponse(datUrl, archive, req, res)
     })
   }
@@ -38,20 +41,22 @@ function HyperdriveHttp (getArchive) {
     if (/\.changes$/.test(key)) {
       key = key.slice(0, -8)
       op = 'changes'
-      if (singleArchive) url = url.slice(0, -8)
     }
 
     try {
       encoding.decode(key)
     } catch (_) {
-      if (!singleArchive) return null
+      if (op === 'changes') url = url.slice(0, -8)
+      key = null
+      filename = url.slice(1)
+      singleArchive = true
     }
-    if (singleArchive) filename = url.slice(1)
 
     return {
       key: key,
       filename: filename,
-      op: op
+      op: op,
+      singleArchive: singleArchive
     }
   }
 }
