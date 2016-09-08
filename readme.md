@@ -111,6 +111,7 @@ Pass an archive lookup function for the first argument of `hyperdriveHttp`. The 
 datInfo = {
   key: archive.key,
   filename: someFile.txt,
-  op: 'get' // or 'changes'
+  op: 'get', // or 'changes'
+  singleArchive: false // user may be requesting single archive at root. you may or may not support this. if this is true, key will be null.
 }
 ```
