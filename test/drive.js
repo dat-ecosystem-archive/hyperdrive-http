@@ -8,6 +8,8 @@ var request = require('request')
 var raf = require('random-access-file')
 var ndjson = require('ndjson')
 var hyperdriveHttp = require('..')
+var collect = require('collect-stream')
+var encoding = require('dat-encoding')
 
 var drive = hyperdrive(memdb())
 var archive1 = drive.createArchive({
@@ -20,10 +22,12 @@ var archive2 = drive.createArchive({
     return raf(path.join(__dirname, name))
   }
 })
+var archive3 = drive.createArchive()
 var server = http.createServer()
 var archives = {}
 archives[archive1.key.toString('hex')] = archive1
 archives[archive2.key.toString('hex')] = archive2
+archives[archive3.key.toString('hex')] = archive3
 
 test('setup', function (t) {
   server.listen(8000)
@@ -52,7 +56,7 @@ test('Single Archive Metadata', function (t) {
   })
 })
 
-test('Single Archive File', function (t) {
+test('Single Archive GET File', function (t) {
   var onrequest = hyperdriveHttp(archive1)
   server.once('request', onrequest)
   request('http://localhost:8000/drive.js', function (err, res, body) {
@@ -66,6 +70,23 @@ test('Single Archive File', function (t) {
       })
     }
   })
+})
+
+test('Single Archive POST File', function (t) {
+  var onrequest = hyperdriveHttp(archive3)
+  server.once('request', onrequest)
+  fs.createReadStream(path.join(__dirname, 'drive.js'))
+  .pipe(request.post('http://localhost:8000', function (err, res, body) {
+    t.error(err, 'no request error')
+    if (!err && res.statusCode === 200) {
+      t.equal(body.toString(), encoding.encode(archive3.key), 'Responds with key')
+      collect(archive3.createFileReadStream('file'), function (err, body) {
+        t.error(err, 'no hyperdrive error')
+        t.same(body, fs.readFileSync(path.join(__dirname, 'drive.js')))
+        t.end()
+      })
+    }
+  }))
 })
 
 test('Single Archive Metadata Changes', function (t) {
@@ -111,7 +132,7 @@ test('Multiple Archives Metadata', function (t) {
   })
 })
 
-test('Multiple Archives File', function (t) {
+test('Multiple Archives GET File', function (t) {
   var onrequest = hyperdriveHttp(getArchive)
   server.once('request', onrequest)
   var reqUrl = 'http://localhost:8000/' + archive2.key.toString('hex') + '/drive.js'
@@ -126,6 +147,41 @@ test('Multiple Archives File', function (t) {
       })
     }
   })
+})
+
+test('Multiple Archive POST File', function (t) {
+  var onrequest = hyperdriveHttp(getArchive)
+  server.once('request', onrequest)
+  fs.createReadStream(path.join(__dirname, 'drive.js'))
+  .pipe(request.post('http://localhost:8000/', function (err, res, body) {
+    t.error(err, 'no request error')
+    if (!err && res.statusCode === 200) {
+      t.equal(body.toString(), encoding.encode(archive3.key), 'Responds with key')
+      collect(archive3.createFileReadStream('file'), function (err, body) {
+        t.error(err, 'no hyperdrive error')
+        t.same(body, fs.readFileSync(path.join(__dirname, 'drive.js')))
+        t.end()
+      })
+    }
+  }))
+})
+
+test('Multiple Archive POST File 2', function (t) {
+  var onrequest = hyperdriveHttp(getArchive)
+  server.once('request', onrequest)
+  var reqUrl = 'http://localhost:8000/' + archive3.key.toString('hex')
+  fs.createReadStream(path.join(__dirname, 'drive.js'))
+  .pipe(request.post(reqUrl, function (err, res, body) {
+    t.error(err, 'no request error')
+    if (!err && res.statusCode === 200) {
+      t.equal(body.toString(), encoding.encode(archive3.key), 'Responds with key')
+      collect(archive3.createFileReadStream('file'), function (err, body) {
+        t.error(err, 'no hyperdrive error')
+        t.same(body, fs.readFileSync(path.join(__dirname, 'drive.js')))
+        t.end()
+      })
+    }
+  }))
 })
 
 test('Multiple Archive Metadata Changes', function (t) {
@@ -160,5 +216,5 @@ test.onFinish(function () {
 })
 
 function getArchive (info, cb) {
-  cb(null, archives[info.key])
+  cb(null, archives[info.key] || archive3)
 }

@@ -39,14 +39,8 @@ function HyperdriveHttp (getArchive) {
     if (/\.changes$/.test(req.url)) {
       op = 'changes'
       filename = filename.replace(/\.changes$/, '')
-    }
-
-    if (!archive) {
-      try {
-        encoding.decode(key)
-      } catch (_) {
-        return null
-      }
+    } else if (req.method === 'POST') {
+      op = 'upload'
     }
 
     return {
@@ -59,6 +53,13 @@ function HyperdriveHttp (getArchive) {
 
 function archiveResponse (datUrl, archive, req, res) {
   if (!archive) onerror(404, res)
+
+  if (datUrl.op === 'upload') {
+    var ws = archive.createFileWriteStream('file')
+    ws.on('finish', () => res.end(encoding.encode(archive.key)))
+    pump(req, ws)
+    return
+  }
 
   if (!datUrl.filename || !archive.metadata) {
     var opts = {live: datUrl.op === 'changes'}
