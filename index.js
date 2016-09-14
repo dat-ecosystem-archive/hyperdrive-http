@@ -10,10 +10,9 @@ var through = require('through2')
 module.exports = HyperdriveHttp
 
 function HyperdriveHttp (getArchive) {
-  var singleArchive = false
+  var archive
   if (typeof (getArchive) !== 'function') {
-    var archive = getArchive
-    singleArchive = true
+    archive = getArchive
     getArchive = function (datUrl, cb) {
       cb(null, archive)
     }
@@ -31,22 +30,24 @@ function HyperdriveHttp (getArchive) {
 
   function parse (url) {
     var segs = url.split('/').filter(Boolean)
-    var key = segs[0]
-    var filename = segs[1]
-
+    var key = archive
+      ? encoding.encode(archive.key)
+      : segs.shift()
+    var filename = segs.shift()
     var op = 'get'
-    if (/\.changes$/.test(key)) {
-      key = key.slice(0, -8)
+
+    if (/\.changes$/.test(url)) {
       op = 'changes'
-      if (singleArchive) url = url.slice(0, -8)
+      filename = filename.replace(/\.changes$/, '')
     }
 
-    try {
-      encoding.decode(key)
-    } catch (_) {
-      if (!singleArchive) return null
+    if (!archive) {
+      try {
+        encoding.decode(key)
+      } catch (_) {
+        return null
+      }
     }
-    if (singleArchive) filename = url.slice(1)
 
     return {
       key: key,
