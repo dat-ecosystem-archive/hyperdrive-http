@@ -18,7 +18,7 @@ function HyperdriveHttp (getArchive) {
     }
   }
   var onrequest = function (req, res) {
-    var datUrl = parse(req.url)
+    var datUrl = parse(req)
     if (!datUrl) return onerror(404, res)
     getArchive(datUrl, function (err, archive) {
       if (err) return onerror(err)
@@ -28,25 +28,19 @@ function HyperdriveHttp (getArchive) {
 
   return onrequest
 
-  function parse (url) {
-    var segs = url.split('/').filter(Boolean)
+  function parse (req) {
+    var segs = req.url.split('/').filter(Boolean)
     var key = archive
       ? encoding.encode(archive.key)
       : segs.shift()
     var filename = segs.shift()
     var op = 'get'
 
-    if (/\.changes$/.test(url)) {
+    if (/\.changes$/.test(req.url)) {
       op = 'changes'
       filename = filename.replace(/\.changes$/, '')
-    }
-
-    if (!archive) {
-      try {
-        encoding.decode(key)
-      } catch (_) {
-        return null
-      }
+    } else if (req.method === 'POST') {
+      op = 'upload'
     }
 
     return {
@@ -59,6 +53,13 @@ function HyperdriveHttp (getArchive) {
 
 function archiveResponse (datUrl, archive, req, res) {
   if (!archive) onerror(404, res)
+
+  if (datUrl.op === 'upload') {
+    var ws = archive.createFileWriteStream('file')
+    ws.on('finish', () => res.end(encoding.encode(archive.key)))
+    pump(req, ws)
+    return
+  }
 
   if (!datUrl.filename || !archive.metadata) {
     var opts = {live: datUrl.op === 'changes'}

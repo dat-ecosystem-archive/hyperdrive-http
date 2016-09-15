@@ -71,11 +71,13 @@ Hyperdrive-http responds to any URL with a specific format. If the URL does cann
 
 * Get metadata for archive: `http://dat.haus/c5dbfe5521d8dddba683544ee4b1c7f6ce1c7b23bd387bd850397e4aaf9afbd9/`
 * Get file from archive: `http://dat.haus/c5dbfe5521d8dddba683544ee4b1c7f6ce1c7b23bd387bd850397e4aaf9afbd9/filename.pdf`
+* Upload file: `POST http://archive-example.com/` or `POST http://archive-example.com/c5dbfe5521d8dddba683544ee4b1c7f6ce1c7b23bd387bd850397e4aaf9afbd9`
 
 #### Single Archive Mode
 
 * Get metadata for archive: `http://archive-example.com/`
 * Get file from archive: `http://archive-example.com/filename.pdf`
+* Upload file: `POST http://archive-example.com/`
 
 #### Hypercore Mode
 
