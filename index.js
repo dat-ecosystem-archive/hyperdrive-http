@@ -21,7 +21,7 @@ function HyperdriveHttp (getArchive) {
     var datUrl = parse(req)
     if (!datUrl) return onerror(404, res)
     getArchive(datUrl, function (err, archive) {
-      if (err) return onerror(err)
+      if (err) return onerror(err, res)
       archiveResponse(datUrl, archive, req, res)
     })
   }
@@ -36,9 +36,18 @@ function HyperdriveHttp (getArchive) {
     var filename = segs.shift()
     var op = 'get'
 
+    try {
+      // check if we are serving archive at root
+      key = key.replace(/\.changes$/, '')
+      encoding.decode(key)
+    } catch (e) {
+      if (!filename) filename = key
+      key = null
+    }
+
     if (/\.changes$/.test(req.url)) {
       op = 'changes'
-      filename = filename.replace(/\.changes$/, '')
+      if (filename) filename = filename.replace(/\.changes$/, '')
     } else if (req.method === 'POST') {
       op = 'upload'
     }
@@ -103,6 +112,10 @@ function archiveResponse (datUrl, archive, req, res) {
 }
 
 function onerror (status, res) {
+  if (typeof status !== 'number') {
+    console.error(status)
+    status = 404
+  }
   res.statusCode = status
   res.end()
 }
