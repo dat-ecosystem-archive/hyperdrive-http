@@ -14,13 +14,14 @@ test('setup', function (t) {
 })
 
 test('GET Parsing no key', function (t) {
-  t.plan(6)
+  t.plan(8)
   var count = 0
   var rootUrl = 'http://localhost:8001'
   var fileTests = [ // parsed filename should match these
     undefined,
     'file.txt',
-    'dir/file.txt'
+    'dir/file.txt',
+    'dir/subdir/file.txt'
   ]
 
   var onrequest = hyperdriveHttp(function (info, cb) {
@@ -40,13 +41,14 @@ test('GET Parsing no key', function (t) {
 })
 
 test('GET Parsing with key', function (t) {
-  t.plan(6)
+  t.plan(8)
   var count = 0
   var rootUrl = 'http://localhost:8001'
   var fileTests = [ // parsed filename should match these
     '72072fab3d3f593453c1caed2b4b176b03af2f58ef725722c8937403997c03f8',
     '72072fab3d3f593453c1caed2b4b176b03af2f58ef725722c8937403997c03f8/file.txt',
-    '72072fab3d3f593453c1caed2b4b176b03af2f58ef725722c8937403997c03f8/dir/file.txt'
+    '72072fab3d3f593453c1caed2b4b176b03af2f58ef725722c8937403997c03f8/dir/file.txt',
+    '72072fab3d3f593453c1caed2b4b176b03af2f58ef725722c8937403997c03f8/dir/subdir/file.txt'
   ]
 
   var onrequest = hyperdriveHttp(function (info, cb) {

@@ -41,7 +41,7 @@ function HyperdriveHttp (getArchive) {
       key = key.replace(/\.changes$/, '')
       encoding.encode(Buffer.from(key, 'hex'))
     } catch (e) {
-      filename = segs.length ? [key, segs].join('/') : key
+      filename = segs.length ? [key].concat(segs).join('/') : key
       key = null
     }
 
