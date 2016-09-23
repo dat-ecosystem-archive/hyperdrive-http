@@ -112,10 +112,7 @@ function archiveResponse (datUrl, archive, req, res) {
 }
 
 function onerror (status, res) {
-  if (typeof status !== 'number') {
-    // console.error(status)
-    status = 404
-  }
+  if (typeof status !== 'number') status = 404
   res.statusCode = status
   res.end()
 }
