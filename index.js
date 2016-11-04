@@ -33,7 +33,7 @@ function HyperdriveHttp (getArchive) {
     var key = archive
       ? encoding.encode(archive.key)
       : segs.shift()
-    var filename = segs.shift()
+    var filename = segs.join('/')
     var op = 'get'
 
     try {
@@ -41,7 +41,7 @@ function HyperdriveHttp (getArchive) {
       key = key.replace(/\.changes$/, '')
       encoding.decode(key)
     } catch (e) {
-      if (!filename) filename = key
+      filename = segs.length ? [key].concat(segs).join('/') : key
       key = null
     }
 
@@ -112,10 +112,7 @@ function archiveResponse (datUrl, archive, req, res) {
 }
 
 function onerror (status, res) {
-  if (typeof status !== 'number') {
-    console.error(status)
-    status = 404
-  }
+  if (typeof status !== 'number') status = 404
   res.statusCode = status
   res.end()
 }
