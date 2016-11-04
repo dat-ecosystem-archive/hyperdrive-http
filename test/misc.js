@@ -55,17 +55,27 @@ test('GET Parsing with key', function (t) {
     var segs = fileTests[count].split('/')
     t.same(info.key, segs.shift())
     t.same(info.filename, segs.join('/'), 'file parse ok')
-    count++
     if (count === fileTests.length) server.removeListener('request', onrequest)
     cb(404)
   })
   server.on('request', onrequest)
-  fileTests.forEach(function (filePath) {
-    var getUrl = filePath ? url.resolve(rootUrl, filePath) : rootUrl
-    request.get(getUrl).on('error', function () {
-      return
+  next()
+
+  function next () {
+    testFile(fileTests[count], function () {
+      if (count === fileTests.length) return
+      next()
     })
-  })
+  }
+
+  function testFile (filePath, cb) {
+    var getUrl = filePath ? url.resolve(rootUrl, filePath) : rootUrl
+    request.get(getUrl)
+    .on('response', function () {
+      count++
+      cb()
+    })
+  }
 })
 
 test.onFinish(function () {
