@@ -89,7 +89,7 @@ function archiveResponse (datUrl, archive, req, res) {
   }
 
   archive.get(datUrl.filename, cbTimeout((err, entry) => {
-    if (err && err.code === 'ETIMEOUT') return onerror(404, res)
+    if (err && err.code === 'ETIMEDOUT') return onerror(404, res)
     if (err || !entry || entry.type !== 'file') return onerror(404, res)
 
     var range = req.headers.range && rangeParser(entry.length, req.headers.range)[0]
