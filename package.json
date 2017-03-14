@@ -1,5 +1,5 @@
 {
-  "name": "hyperhttp",
+  "name": "hyperdrive-http",
   "version": "3.4.2",
   "description": "Handle Hyper[drive|core] HTTP Requests",
   "main": "index.js",

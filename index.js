@@ -26,8 +26,22 @@ module.exports = function (getArchive, opts) {
 
   var that = onrequest
   that.parse = parse
-  that.get = serveFeedOrArchive
-  that.file = serveFile
+  that.get = function (req, res, archive, opts) {
+    if (archive) return serveFeedOrArchive(req, res, archive)
+    var datUrl = parse(req)
+    getArchive(datUrl, function (err, archive) {
+      if (err) return onerror(err)
+      serveFeedOrArchive(req, res, archive, datUrl)
+    })
+  }
+  that.file = function (req, res, archive, filename) {
+    if (archive) return serveFile(req, res, archive, filename)
+    var datUrl = parse(req)
+    getArchive(datUrl, function (err, archive) {
+      if (err) return onerror(err)
+      serveFile(req, res, archive, datUrl.filename)
+    })
+  }
 
   return that
 
@@ -113,6 +127,7 @@ function serveFile (req, res, archive, filename) {
   archive.get(filename, cbTimeout((err, entry) => {
     if (err && err.code === 'ETIMEDOUT') return onerror(404, res)
     if (err || !entry || entry.type !== 'file') return onerror(404, res)
+    debug('serveFile, got entry', entry)
 
     var range = req.headers.range && rangeParser(entry.length, req.headers.range)[0]
 
@@ -122,6 +137,7 @@ function serveFile (req, res, archive, filename) {
     if (!range || range < 0) {
       res.setHeader('Content-Length', entry.length)
       if (req.method === 'HEAD') return res.end()
+      debug('serveFile, returning file')
       return pump(archive.createFileReadStream(entry), res)
     } else {
       res.statusCode = 206
