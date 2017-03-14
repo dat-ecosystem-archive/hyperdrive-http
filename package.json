@@ -1,12 +1,13 @@
 {
   "name": "hyperdrive-http",
   "version": "3.4.2",
-  "description": "Handle Hyperdrive HTTP Requests",
+  "description": "Handle Hyper[drive|core] HTTP Requests",
   "main": "index.js",
   "scripts": {
     "test": "standard && tape test/*.js | tap-spec"
   },
   "keywords": [
+    "hypercore",
     "hyperdrive",
     "dat"
   ],
@@ -15,6 +16,7 @@
   "dependencies": {
     "callback-timeout": "^3.0.0",
     "dat-encoding": "^4.0.0",
+    "debug": "^2.6.1",
     "mime": "^1.3.4",
     "ndjson": "^1.4.3",
     "pump": "^1.0.1",

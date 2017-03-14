@@ -40,6 +40,9 @@ test('Single Feed Data', function (t) {
       t.same(body[0], '"hello"', 'first chunk correct')
       t.same(body[1], '"world"', 'second chunk correct')
       t.end()
+    } else {
+      t.fail('bad response')
+      t.end()
     }
   })
 })
