@@ -4,7 +4,7 @@
   "description": "Handle Hyper[drive|core] HTTP Requests",
   "main": "index.js",
   "scripts": {
-    "test": "standard && tape test/*.js | tap-spec"
+    "test": "standard"
   },
   "keywords": [
     "hypercore",
@@ -14,15 +14,10 @@
   "author": "Joe Hand <joe@hand.email>",
   "license": "MIT",
   "dependencies": {
-    "callback-timeout": "^3.0.0",
-    "dat-encoding": "^4.0.0",
-    "debug": "^2.6.1",
+    "directory-index-html": "^2.1.0",
     "mime": "^1.3.4",
-    "ndjson": "^1.4.3",
-    "pump": "^1.0.1",
-    "range-parser": "^1.2.0",
-    "through-timeout": "^1.0.0",
-    "through2": "^2.0.1"
+    "pump": "^1.0.2",
+    "range-parser": "^1.2.0"
   },
   "repository": {
     "type": "git",
@@ -33,14 +28,8 @@
   },
   "homepage": "https://github.com/joehand/hyperdrive-http",
   "devDependencies": {
-    "collect-stream": "^1.2.1",
-    "hypercore": "^4.7.0",
-    "hyperdrive": "^7.0.0",
-    "memdb": "^1.3.1",
-    "random-access-file": "^1.2.0",
-    "request": "^2.73.0",
-    "standard": "^8.5.0",
-    "tap-spec": "^4.1.1",
-    "tape": "^4.6.0"
+    "hyperdrive": "^8.0.0",
+    "random-access-memory": "^2.3.0",
+    "standard": "^9.0.2"
   }
 }

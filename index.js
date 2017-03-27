@@ -1,156 +1,149 @@
-var assert = require('assert')
-var stream = require('stream')
+var toHTML = require('directory-index-html')
 var pump = require('pump')
-var TimeoutStream = require('through-timeout')
-var cbTimeout = require('callback-timeout')
 var mime = require('mime')
-var rangeParser = require('range-parser')
-var ndjson = require('ndjson')
-var encoding = require('dat-encoding')
-var through2 = require('through2')
-var debug = require('debug')('hyperhttp')
+var range = require('range-parser')
+var qs = require('querystring')
+var pkg = require('./package')
 
-module.exports = function (getArchive, opts) {
-  assert.ok(getArchive, 'hyperhttp: getArchive|archive required')
+module.exports = serve
 
-  var archive
-  if (typeof (getArchive) !== 'function') {
-    // Make a getArchive function to get the single archive by default
-    archive = getArchive
-    getArchive = function (datUrl, cb) {
-      cb(null, archive)
-    }
-  }
-  // Sanity check =)
-  assert.equal(typeof getArchive, 'function', 'hyperhttp: getArchive must be function')
+function serve (archive, opts) {
+  if (!opts) opts = {}
 
-  var that = onrequest
-  that.parse = parse
-  that.get = function (req, res, archive, opts) {
-    if (archive) return serveFeedOrArchive(req, res, archive)
-    var datUrl = parse(req)
-    getArchive(datUrl, function (err, archive) {
-      if (err) return onerror(err)
-      serveFeedOrArchive(req, res, archive, datUrl)
-    })
-  }
-  that.file = function (req, res, archive, filename) {
-    if (archive) return serveFile(req, res, archive, filename)
-    var datUrl = parse(req)
-    getArchive(datUrl, function (err, archive) {
-      if (err) return onerror(err)
-      serveFile(req, res, archive, datUrl.filename)
-    })
-  }
-
-  return that
+  return onrequest
 
   function onrequest (req, res) {
-    var datUrl = parse(req)
-    if (!datUrl) return onerror(404, res) // TODO: explain error in res
+    var name = decodeURI(req.url.split('?')[0])
+    var query = qs.parse(req.url.split('?')[1] || '')
 
-    getArchive(datUrl, function (err, archive) {
-      if (err) return onerror(err, res) // TODO: explain error in res
-      if (!archive) return onerror(404, res) // TODO: explain error in res
+    var wait = query.wait && Number(query.wait.toString()) || 0
+    var have = archive.metadata ? archive.metadata.length : -1
 
-      if (datUrl.op === 'upload') {
-        var ws = archive.createFileWriteStream('file')
-        ws.on('finish', () => res.end(encoding.encode(archive.key)))
-        pump(req, ws)
-        return
-      } else if (!datUrl.filename || !archive.metadata) {
-        // serve archive or hypercore feed
-        serveFeedOrArchive(req, res, archive, datUrl).pipe(res)
-      } else {
-        serveFile(req, res, archive, datUrl.filename)
-      }
-    })
-  }
+    if (wait <= have) return ready()
+    waitFor(archive, wait, ready)
 
-  function parse (req) {
-    var segs = req.url.split('/').filter(Boolean)
-    var key = archive
-      ? encoding.encode(archive.key)
-      : segs.shift()
-    var filename = segs.join('/')
-    var op = 'get'
-
-    try {
-      // check if we are serving archive at root
-      key = key.replace(/\.changes$/, '')
-      encoding.decode(key)
-    } catch (e) {
-      filename = segs.length ? [key].concat(segs).join('/') : key
-      key = null
+    function ready () {
+      var arch = /^\d+$/.test(query.version) ? archive.checkout(Number(query.version)) : archive
+      if (name[name.length - 1] === '/') ondirectory(arch, name, req, res, opts)
+      else onfile(arch, name, req, res)
     }
-
-    if (/\.changes$/.test(req.url)) {
-      op = 'changes'
-      if (filename) filename = filename.replace(/\.changes$/, '')
-    } else if (req.method === 'POST') {
-      op = 'upload'
-    }
-
-    var results = {
-      key: key,
-      filename: filename,
-      op: op
-    }
-    debug('parse() results', results)
-    return results
   }
 }
 
-function serveFeedOrArchive (req, res, archive, urlOpts) {
-  debug('serveFeedOrArchive', archive.key.toString('hex'))
-  var opts = { live: urlOpts.op === 'changes' }
-  var through = new stream.PassThrough()
-  var src = archive.metadata ? archive.list(opts) : archive.createReadStream(opts)
-  var timeout = TimeoutStream({
-    objectMode: true,
-    duration: 10000
-  }, () => {
-    onerror(404, res)
-    src.destroy()
-  })
+function onfile (archive, name, req, res) {
+  archive.stat(name, function (err, st) {
+    if (err) return onerror(res, 404, err)
 
-  res.setHeader('Content-Type', 'application/json')
-  if (archive.metadata) return pump(src, timeout, ndjson.serialize(), through)
-  return pump(src, timeout, through2.obj(function (chunk, enc, cb) {
-    cb(null, chunk.toString())
-  }), ndjson.serialize(), through)
-}
+    if (st.isDirectory()) {
+      res.statusCode = 302
+      res.setHeader('Location', name + '/')
+      return
+    }
 
-function serveFile (req, res, archive, filename) {
-  debug('serveFile', archive.key.toString('hex'), 'filename', [filename])
+    var r = req.headers.range && range(st.size, req.headers.range)[0]
+    res.setHeader('Accept-Ranges', 'bytes')
+    res.setHeader('Content-Type', mime.lookup(name))
 
-  archive.get(filename, cbTimeout((err, entry) => {
-    if (err && err.code === 'ETIMEDOUT') return onerror(404, res)
-    if (err || !entry || entry.type !== 'file') return onerror(404, res)
-    debug('serveFile, got entry', entry)
-
-    var range = req.headers.range && rangeParser(entry.length, req.headers.range)[0]
-
-    res.setHeader('Access-Ranges', 'bytes')
-    res.setHeader('Content-Type', mime.lookup(filename))
-
-    if (!range || range < 0) {
-      res.setHeader('Content-Length', entry.length)
-      if (req.method === 'HEAD') return res.end()
-      debug('serveFile, returning file')
-      return pump(archive.createFileReadStream(entry), res)
-    } else {
+    if (r) {
       res.statusCode = 206
-      res.setHeader('Content-Length', range.end - range.start + 1)
-      res.setHeader('Content-Range', 'bytes ' + range.start + '-' + range.end + '/' + entry.length)
-      if (req.method === 'HEAD') return res.end()
-      return pump(archive.createFileReadStream(entry, {start: range.start, end: range.end + 1}), res)
+      res.setHeader('Content-Range', 'bytes ' + r.start + '-' + r.end + '/' + st.size)
+      res.setHeader('Content-Length', r.end - r.start + 1)
+    } else {
+      res.setHeader('Content-Length', st.size)
     }
-  }, 10000))
+
+    if (req.method === 'HEAD') return res.end()
+    pump(archive.createReadStream(name, r), res)
+  })
 }
 
-function onerror (status, res) {
-  if (typeof status !== 'number') status = 404
+function ondirectory (archive, name, req, res, opts) {
+  archive.stat(name + 'index.html', function (err) {
+    if (err) return ondirectoryindex(archive, name, req, res, opts)
+    onfile(archive, name + 'index.html', req, res)
+  })
+}
+
+function ondirectoryindex (archive, name, req, res, opts) {
+  list(archive, name, function (err, entries) {
+    if (err) entries = []
+
+    var wait = archive.metadata ? archive.metadata.length + 1 : 0
+    var script = `
+      function liveUpdate () {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "${name}?wait=${wait}", true)
+        xhr.onload = function () {
+          document.open()
+          document.write(xhr.responseText)
+          document.close()
+        }
+        xhr.onerror = function () {
+          setTimeout(liveUpdate, 1000)
+        }
+        xhr.send(null)
+      }
+
+      liveUpdate()
+    `
+
+    var html = toHTML({directory: name, script: (!opts.live || archive._checkout) ? null : script}, entries)
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Content-Length', Buffer.byteLength(html))
+    if (opts.exposeHeaders) {
+      res.setHeader('Hyperdrive-Key', archive.key.toString('hex'))
+      res.setHeader('Hyperdrive-Version', archive.version)
+      res.setHeader('Hyperdrive-Http-Version', pkg.version)
+    }
+    res.end(html)
+  })
+}
+
+function waitFor (archive, until, cb) { // this feels a bit hacky, TODO: make less complicated?
+  archive.setMaxListeners(0)
+  if (!archive.metadata) archive.once('ready', waitFor.bind(null, archive, until, cb))
+  if (archive.metadata.length >= until) return cb()
+  archive.metadata.setMaxListeners(0)
+  archive.metadata.once('append', waitFor.bind(null, archive, until, cb))
+}
+
+function onerror (res, status, err) {
   res.statusCode = status
-  res.end()
+  res.end(err.stack)
+}
+
+function list (archive, name, cb) {
+  archive.readdir(name, function (err, names) {
+    if (err) return cb(err)
+
+    var error = null
+    var missing = names.length
+    var entries = []
+
+    if (!missing) return cb(null, [])
+    for (var i = 0; i < names.length; i++) stat(name + names[i], names[i])
+
+    function stat (name, base) {
+      archive.stat(name, function (err, st) {
+        if (err) error = err
+
+        if (st) {
+          entries.push({
+            type: st.isDirectory() ? 'directory' : 'file',
+            name: base,
+            size: st.size,
+            mtime: st.mtime
+          })
+        }
+
+        if (--missing) return
+        if (error) return cb(error)
+        cb(null, entries.sort(sort))
+      })
+    }
+  })
+}
+
+function sort (a, b) {
+  return a.name.localeCompare(b.name)
 }
