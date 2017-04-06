@@ -1,25 +1,19 @@
 var http = require('http')
-var path = require('path')
-var memdb = require('memdb')
+var fs = require('fs')
 var hyperdrive = require('hyperdrive')
-var raf = require('random-access-file')
-var hyperdriveHttp = require('.')
+var ram = require('random-access-memory')
+var serve = require('.')
 
-var drive = hyperdrive(memdb())
-var archive = drive.createArchive({
-  file: function (name) {
-    return raf(path.join(__dirname, name))
-  }
-})
-var onrequest = hyperdriveHttp(archive)
-var server = http.createServer()
+var archive = hyperdrive(ram)
 
-archive.append('readme.md')
-archive.append('package.json')
-archive.append('index.js')
+var server = http.createServer(serve(archive, {exposeHeaders: true, live: true}))
+
+archive.writeFile('readme.md', fs.readFileSync('readme.md'))
+archive.writeFile('package.json', fs.readFileSync('package.json'))
+archive.writeFile('index.js', fs.readFileSync('index.js'))
+archive.writeFile('foo/index.html', '<h1>INDEX PAGE YO</h1>')
 
 server.listen(8000)
-server.on('request', onrequest)
 
-console.info('Now listening on localhost:8000')
+console.info('Now listening on http://localhost:8000')
 console.info('Visit in your browser to see metadata')
