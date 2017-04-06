@@ -19,9 +19,9 @@ To use hyperdrive-http you will need to:
 
 * Create your own http server
 * Setup your hyperdrive archive
-* Connect to the swarm before serving archive
+* For remote archives, connect to the swarm
 
-### API
+## API
 
 Hyperdrive works with many archives/feeds or a single archive.
 
@@ -42,3 +42,12 @@ Hyperdrive-http responds to any URL with a specific format. If the URL does cann
 * Get file from archive: `http://archive-example.com/filename.pdf`
 
 If a directory in the archive contains an `index.html` page that file is returned instead of the directory listing.
+
+## CLI
+
+There is also a CLI that can be used for demo + testing. Pass it a dat link or a path to an existing dat folder:
+
+```
+node cli.js <dat-key>
+node cli.js /path/do/existing/dat
+```
