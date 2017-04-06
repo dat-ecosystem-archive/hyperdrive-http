@@ -19,7 +19,7 @@ if (!key) {
 
 try {
   fs.stat(path.join(key, '.dat'), function (err, stat) {
-    if (err) return start
+    if (err) return start()
     storage = path.join(key, '.dat')
     key = null
     start()
