@@ -16,7 +16,7 @@ function serve (archive, opts) {
     var name = decodeURI(req.url.split('?')[0])
     var query = qs.parse(req.url.split('?')[1] || '')
 
-    var wait = query.wait && Number(query.wait.toString()) || 0
+    var wait = (query.wait && Number(query.wait.toString())) || 0
     var have = archive.metadata ? archive.metadata.length : -1
 
     if (wait <= have) return ready()

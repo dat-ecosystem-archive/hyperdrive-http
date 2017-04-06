@@ -35,7 +35,7 @@ test('GET Parsing no key', function (t) {
   fileTests.forEach(function (filePath) {
     var getUrl = filePath ? url.resolve(rootUrl, filePath) : rootUrl
     request.get(getUrl).on('error', function () {
-      return
+
     })
   })
 })
