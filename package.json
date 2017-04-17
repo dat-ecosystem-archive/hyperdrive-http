@@ -6,6 +6,9 @@
   "scripts": {
     "test": "standard"
   },
+  "bin": {
+    "hyperdrive-http": "./cli.js"
+  },
   "keywords": [
     "hypercore",
     "hyperdrive",
