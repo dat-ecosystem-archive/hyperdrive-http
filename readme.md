@@ -33,6 +33,7 @@ Hyperdrive works with many archives/feeds or a single archive.
   Hyperdrive-Version: 4
   ```
 - `live` - If set to `true` will reload a directly listing if the archive receives updates.
+- `footer` - Add a footer to your HTML page. Automatically adds archive version number to footer.
 
 ### URL Format
 

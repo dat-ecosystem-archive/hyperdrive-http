@@ -87,7 +87,8 @@ function ondirectoryindex (archive, name, req, res, opts) {
       liveUpdate()
     `
 
-    var html = toHTML({directory: name, script: (!opts.live || archive._checkout) ? null : script}, entries)
+    var footer = opts.footer ? opts.footer + ' Archive version: ' + archive.version : null
+    var html = toHTML({directory: name, script: (!opts.live || archive._checkout) ? null : script, footer: footer}, entries)
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.setHeader('Content-Length', Buffer.byteLength(html))
     if (opts.exposeHeaders) {
