@@ -74,14 +74,17 @@ function ondirectoryindex (archive, name, req, res, opts) {
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "${name}?wait=${wait}", true)
         xhr.onload = function () {
+          if (xhr.status !== 200) return onerror()
           document.open()
           document.write(xhr.responseText)
           document.close()
         }
-        xhr.onerror = function () {
+        xhr.onerror = onerror
+        xhr.send(null)
+
+        function onerror () {
           setTimeout(liveUpdate, 1000)
         }
-        xhr.send(null)
       }
 
       liveUpdate()
