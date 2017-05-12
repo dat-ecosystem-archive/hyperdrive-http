@@ -1,6 +1,6 @@
 {
   "name": "hyperdrive-http",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "Handle Hyper[drive|core] HTTP Requests",
   "main": "index.js",
   "scripts": {
