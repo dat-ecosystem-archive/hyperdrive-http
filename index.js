@@ -3,6 +3,7 @@ var pump = require('pump')
 var mime = require('mime')
 var range = require('range-parser')
 var qs = require('querystring')
+var corsify = require('corsify')
 var pkg = require('./package')
 
 module.exports = serve
@@ -10,7 +11,7 @@ module.exports = serve
 function serve (archive, opts) {
   if (!opts) opts = {}
 
-  return onrequest
+  return corsify(onrequest)
 
   function onrequest (req, res) {
     var name = decodeURI(req.url.split('?')[0])
