@@ -4,7 +4,7 @@ var mime = require('mime')
 var range = require('range-parser')
 var qs = require('querystring')
 var corsify = require('corsify')
-var pkg = require('./package')
+var pkg = require('./package.json')
 
 module.exports = serve
 
