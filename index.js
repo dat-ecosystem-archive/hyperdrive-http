@@ -73,7 +73,7 @@ function ondirectoryindex (archive, name, req, res, opts) {
     var script = `
       function liveUpdate () {
         var xhr = new XMLHttpRequest()
-        xhr.open("GET", "${name}?wait=${wait}", true)
+        xhr.open("GET", ".${name}?wait=${wait}", true)
         xhr.onload = function () {
           if (xhr.status !== 200) return onerror()
           document.open()
