@@ -29,7 +29,7 @@ test('GET Parsing no key', function (t) {
     t.same(info.filename, fileTests[count], 'file parse ok')
     count++
     if (count === fileTests.length) server.removeListener('request', onrequest)
-    cb(404)
+    cb(null, 404)
   })
   server.on('request', onrequest)
   fileTests.forEach(function (filePath) {
@@ -56,7 +56,7 @@ test('GET Parsing with key', function (t) {
     t.same(info.key, segs.shift())
     t.same(info.filename, segs.join('/'), 'file parse ok')
     if (count === fileTests.length) server.removeListener('request', onrequest)
-    cb(404)
+    cb(null, 404)
   })
   server.on('request', onrequest)
   next()
