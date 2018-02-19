@@ -32,6 +32,6 @@
     "hyperdiscovery": "^7.0.0",
     "hyperdrive": "^9.0.0",
     "random-access-memory": "^2.3.0",
-    "standard": "^10.0.3"
+    "standard": "^11.0.0"
   }
 }
