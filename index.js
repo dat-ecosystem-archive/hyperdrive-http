@@ -33,7 +33,7 @@ function serve (archive, opts) {
 
 function onfile (archive, name, req, res) {
   archive.stat(name, function (err, st) {
-    if (err) return onerror(res, 404, err)
+    if (err) return on404(archive, res, req)
 
     if (st.isDirectory()) {
       res.statusCode = 302
@@ -55,6 +55,21 @@ function onfile (archive, name, req, res) {
 
     if (req.method === 'HEAD') return res.end()
     pump(archive.createReadStream(name, r), res)
+  })
+}
+
+function on404 (archive, req, res) {
+  getManifest(archive, function (err, parsed) {
+    if (err) return onerror(res, 404, err)
+
+    var fallbackPage = parsed.fallback_page
+
+    if (!fallbackPage) return onerror(res, 404, new Error('Not Found, No Fallback'))
+
+    archive.stat(fallbackPage, function (err) {
+      if (err) return onerror(res, 404, err)
+      onfile(archive, fallbackPage, req, res)
+    })
   })
 }
 
@@ -101,6 +116,23 @@ function ondirectoryindex (archive, name, req, res, opts) {
       res.setHeader('Hyperdrive-Http-Version', pkg.version)
     }
     res.end(html)
+  })
+}
+
+function getManifest (archive, cb) {
+  archive.readFile('/dat.json', 'utf-8', function (err, data) {
+    if (err) cb(err)
+    try {
+      var parsed = JSON.parse(data)
+    } catch (e) {
+      return cb(err)
+    }
+
+    if (!parsed || Array.isArray(parsed) || (typeof parsed !== 'object')) {
+      return cb(new Error('Invalid dat.json format'))
+    }
+
+    cb(null, parsed)
   })
 }
 

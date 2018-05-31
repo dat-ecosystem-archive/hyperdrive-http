@@ -1,0 +1,6 @@
+{
+  "title": "Application Title",
+  "description": "A short description of the app",
+  "fallback_page": "/public/404.html",
+  "web_root": "/public"
+}
