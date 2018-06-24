@@ -43,7 +43,7 @@ function onfile (archive, name, req, res) {
 
     var r = req.headers.range && range(st.size, req.headers.range)[0]
     res.setHeader('Accept-Ranges', 'bytes')
-    res.setHeader('Content-Type', mime.lookup(name))
+    res.setHeader('Content-Type', mime.getType(name))
 
     if (r) {
       res.statusCode = 206
