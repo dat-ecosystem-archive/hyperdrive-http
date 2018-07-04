@@ -16,8 +16,8 @@
   "dependencies": {
     "corsify": "^2.1.0",
     "directory-index-html": "^2.1.0",
-    "mime": "^1.3.4",
-    "pump": "^1.0.2",
+    "mime": "^2.3.1",
+    "pump": "^3.0.0",
     "range-parser": "^1.2.0"
   },
   "repository": {
@@ -29,9 +29,9 @@
   },
   "homepage": "https://github.com/joehand/hyperdrive-http",
   "devDependencies": {
-    "hyperdiscovery": "^7.0.0",
+    "hyperdiscovery": "^8.0.0",
     "hyperdrive": "^9.0.0",
-    "random-access-memory": "^2.3.0",
-    "standard": "^10.0.3"
+    "random-access-memory": "^3.0.0",
+    "standard": "^11.0.1"
   }
 }
