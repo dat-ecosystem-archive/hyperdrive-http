@@ -23,21 +23,28 @@ var archive2 = drive.createArchive({
   }
 })
 var archive3 = drive.createArchive()
+var archive4 = drive.createArchive()
 var server = http.createServer()
 var archives = {}
 archives[archive1.key.toString('hex')] = archive1
 archives[archive2.key.toString('hex')] = archive2
 archives[archive3.key.toString('hex')] = archive3
+archives[archive4.key.toString('hex')] = archive4
 
 test('setup', function (t) {
   server.listen(8000)
   server.once('listening', function () {
     archive1.append('feed.js', function () {
       archive1.append('drive.js', function () {
-        t.end()
+        archive2.append('drive.js', function () {
+          archive4.append('dat.json', function () {
+            archive4.append('404.html', function () {
+              t.end()
+            })
+          })
+        })
       })
     })
-    archive2.append('drive.js')
   })
 })
 
@@ -209,6 +216,18 @@ test('Multiple Archive Metadata Changes', function (t) {
     .on('end', function () {
       if (count < 2) t.fail('response should not end early')
     })
+})
+
+test('Single archive fallback_page Support', function (t) {
+  var onrequest = hyperdriveHttp(archive4)
+  server.once('request', onrequest)
+  request('http://localhost:8000/fakepage.html', function (err, res, body) {
+    t.error(err, 'no request error')
+    if (!err && res.statusCode === 200) {
+      t.same(body, 'File Not Found Page', '404 page content')
+      t.end()
+    }
+  })
 })
 
 test.onFinish(function () {
