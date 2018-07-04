@@ -71,10 +71,10 @@ test('GET Parsing with key', function (t) {
   function testFile (filePath, cb) {
     var getUrl = filePath ? url.resolve(rootUrl, filePath) : rootUrl
     request.get(getUrl)
-    .on('response', function () {
-      count++
-      cb()
-    })
+      .on('response', function () {
+        count++
+        cb()
+      })
   }
 })
 
