@@ -33,7 +33,7 @@ function serve (archive, opts) {
 
 function onfile (archive, name, req, res) {
   archive.stat(name, function (err, st) {
-    if (err) return on404(archive, res, req)
+    if (err) return on404(archive, req, res)
 
     if (st.isDirectory()) {
       res.statusCode = 302
