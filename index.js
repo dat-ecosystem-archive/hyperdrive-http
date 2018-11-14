@@ -146,7 +146,9 @@ function waitFor (archive, until, cb) { // this feels a bit hacky, TODO: make le
 
 function onerror (res, status, err) {
   res.statusCode = status
-  res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+  if (!res.headersSent) {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+  }
   res.end(err.stack)
 }
 
