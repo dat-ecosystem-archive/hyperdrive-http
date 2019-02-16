@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/joehand/hyperdrive-http",
   "devDependencies": {
+    "dat-link-resolve": "^2.3.0",
     "hyperdiscovery": "^8.0.0",
     "hyperdrive": "^9.0.0",
     "random-access-memory": "^3.0.0",

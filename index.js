@@ -12,6 +12,10 @@ module.exports = serve
 function serve (archive, opts) {
   if (!opts) opts = {}
 
+  archive.ready(() => {
+    debug('serving', archive.key.toString('hex'))
+  })
+
   return corsify(onrequest)
 
   function onrequest (req, res) {
