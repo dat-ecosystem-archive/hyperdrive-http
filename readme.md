@@ -9,9 +9,14 @@ Serve a [hyperdrive](https://github.com/mafintosh/hyperdrive) archive over HTTP.
 Hyperdrive-http returns a function to call when you receive a http request:
 
 ```js
-var server = http.createServer()
+var server = http.createServer().listen(8000)
 server.on('request', hyperdriveHttp(archive))
 ```
+
+Supports manifest options in `dat.json`:
+
+* `web_root` - change directory to serve on index
+* `fallback_page` - fallback for 404 errors
 
 ### Setup
 
@@ -42,7 +47,10 @@ Hyperdrive-http responds to any URL with a specific format. If the URL does cann
 * Get archive listing: `http://archive-example.com/`
 * Get file from archive: `http://archive-example.com/filename.pdf`
 
-If a directory in the archive contains an `index.html` page that file is returned instead of the directory listing.
+If a directory in the archive contains an `index.html` page that file is returned instead of the directory listing. If you'd like to view files use a query string:
+
+* View files: `http://archive-example.com/?viewSource=true`
+
 
 ## CLI
 

@@ -5,39 +5,60 @@ var range = require('range-parser')
 var qs = require('querystring')
 var corsify = require('corsify')
 var pkg = require('./package.json')
+var debug = require('debug')('hyperdrive-http')
 
 module.exports = serve
 
 function serve (archive, opts) {
   if (!opts) opts = {}
 
+  archive.ready(() => {
+    debug('serving', archive.key.toString('hex'))
+  })
+
   return corsify(onrequest)
 
   function onrequest (req, res) {
     var name = decodeURI(req.url.split('?')[0])
     var query = qs.parse(req.url.split('?')[1] || '')
+    opts.viewSource = false // reset for each request
 
     var wait = (query.wait && Number(query.wait.toString())) || 0
     var have = archive.metadata ? archive.metadata.length : -1
 
-    if (wait <= have) return ready()
-    waitFor(archive, wait, ready)
+    if (wait <= have) return checkWebroot()
+    waitFor(archive, wait, checkWebroot)
+
+    function checkWebroot () {
+      if (opts.web_root) return ready() // used cached version
+      getManifest(archive, (err, data) => {
+        if (err || !data) return ready()
+        if (data.web_root) opts.web_root = data.web_root
+        ready()
+      })
+    }
 
     function ready () {
       var arch = /^\d+$/.test(query.version) ? archive.checkout(Number(query.version)) : archive
+      if (query.viewSource) {
+        debug('view source', query)
+        opts.viewSource = true
+      }
+      debug('view', name, 'view dir', name[name.length - 1] === '/')
       if (name[name.length - 1] === '/') ondirectory(arch, name, req, res, opts)
-      else onfile(arch, name, req, res)
+      else onfile(arch, name, req, res, opts)
     }
   }
 }
 
-function onfile (archive, name, req, res) {
+function onfile (archive, name, req, res, opts) {
   archive.stat(name, function (err, st) {
     if (err) return on404(archive, req, res)
 
     if (st.isDirectory()) {
       res.statusCode = 302
       res.setHeader('Location', name + '/')
+      ondirectory(archive, name + '/', req, res, opts)
       return
     }
 
@@ -66,7 +87,7 @@ function on404 (archive, req, res) {
 
     if (!fallbackPage) return onerror(res, 404, new Error('Not Found, No Fallback'))
 
-    archive.stat(fallbackPage, function (err) {
+    archive.stat((parsed.web_root || '/') + fallbackPage, function (err) {
       if (err) return onerror(res, 404, err)
       onfile(archive, fallbackPage, req, res)
     })
@@ -74,6 +95,11 @@ function on404 (archive, req, res) {
 }
 
 function ondirectory (archive, name, req, res, opts) {
+  debug('ondirectory:', name, 'options', opts)
+  if (opts.viewSource) return ondirectoryindex(archive, name, req, res, opts)
+
+  if (name === '/' && opts.web_root) name = opts.web_root
+  if (name[name.length - 1] !== '/') name = name + '/'
   archive.stat(name + 'index.html', function (err) {
     if (err) return ondirectoryindex(archive, name, req, res, opts)
     onfile(archive, name + 'index.html', req, res)
@@ -107,7 +133,7 @@ function ondirectoryindex (archive, name, req, res, opts) {
     `
 
     var footer = opts.footer ? 'Archive version: ' + archive.version : null
-    var html = toHTML({directory: name, script: (!opts.live || archive._checkout) ? null : script, footer: footer}, entries)
+    var html = toHTML({ directory: name, script: (!opts.live || archive._checkout) ? null : script, footer: footer }, entries)
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.setHeader('Content-Length', Buffer.byteLength(html))
     if (opts.exposeHeaders) {
@@ -121,7 +147,7 @@ function ondirectoryindex (archive, name, req, res, opts) {
 
 function getManifest (archive, cb) {
   archive.readFile('/dat.json', 'utf-8', function (err, data) {
-    if (err) cb(err)
+    if (err) return cb(err)
     try {
       var parsed = JSON.parse(data)
     } catch (e) {
@@ -141,7 +167,7 @@ function waitFor (archive, until, cb) { // this feels a bit hacky, TODO: make le
   if (!archive.metadata) archive.once('ready', waitFor.bind(null, archive, until, cb))
   if (archive.metadata.length >= until) return cb()
   archive.metadata.setMaxListeners(0)
-  archive.metadata.once('append', waitFor.bind(null, archive, until, cb))
+  archive.metadata.update(waitFor.bind(null, archive, until, cb))
 }
 
 function onerror (res, status, err) {

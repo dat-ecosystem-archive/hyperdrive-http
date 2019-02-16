@@ -1,4 +1,6 @@
 ###Node###
+package-lock.json
+node_modules
 
 # Logs
 logs
@@ -21,11 +23,6 @@ coverage
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 
-# Dependency directory
-# Commenting this out is preferred by some people, see
-# https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git-
-node_modules
-
 # Users Environment Variables
 .lock-wscript
 
@@ -37,7 +34,8 @@ node_modules
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
