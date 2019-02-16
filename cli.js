@@ -27,14 +27,14 @@ try {
 } catch (e) { start() }
 
 function start () {
-  var archive = hyperdrive(storage, key, {sparse: true})
-  var server = http.createServer(serve(archive, {live: true}))
+  var archive = hyperdrive(storage, key, { sparse: true })
+  var server = http.createServer(serve(archive, { live: true }))
   server.listen(port)
   console.log(`Visit http://localhost:${port} to see archive`)
 
   if (key) {
     archive.ready(function () {
-      discovery(archive, {live: true})
+      discovery(archive, { live: true })
     })
   }
 }
