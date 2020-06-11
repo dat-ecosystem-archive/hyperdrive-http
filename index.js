@@ -19,35 +19,44 @@ function serve (archive, opts) {
   return corsify(onrequest)
 
   function onrequest (req, res) {
-    var name = decodeURI(req.url.split('?')[0])
-    var query = qs.parse(req.url.split('?')[1] || '')
-    opts.viewSource = false // reset for each request
-
-    var wait = (query.wait && Number(query.wait.toString())) || 0
-    var have = archive.metadata ? archive.metadata.length : -1
-
-    if (wait <= have) return checkWebroot()
-    waitFor(archive, wait, checkWebroot)
-
-    function checkWebroot () {
-      if (opts.web_root) return ready() // used cached version
-      getManifest(archive, (err, data) => {
-        if (err || !data) return ready()
-        if (data.web_root) opts.web_root = data.web_root
-        ready()
-      })
+    if (req.method === 'GET') {
+      ongetfile(archive, opts, req, res)
+    } else {
+      res.statusCode = 500
+      res.end('illegal method')
     }
+  }
+}
 
-    function ready () {
-      var arch = /^\d+$/.test(query.version) ? archive.checkout(Number(query.version)) : archive
-      if (query.viewSource) {
-        debug('view source', query)
-        opts.viewSource = true
-      }
-      debug('view', name, 'view dir', name[name.length - 1] === '/')
-      if (name[name.length - 1] === '/') ondirectory(arch, name, req, res, opts)
-      else onfile(arch, name, req, res, opts)
+function ongetfile (archive, opts, req, res) {
+  var name = decodeURI(req.url.split('?')[0])
+  var query = qs.parse(req.url.split('?')[1] || '')
+  opts.viewSource = false // reset for each request
+
+  var wait = (query.wait && Number(query.wait.toString())) || 0
+  var have = archive.metadata ? archive.metadata.length : -1
+
+  if (wait <= have) return checkWebroot()
+  waitFor(archive, wait, checkWebroot)
+
+  function checkWebroot () {
+    if (opts.web_root) return ready() // used cached version
+    getManifest(archive, (err, data) => {
+      if (err || !data) return ready()
+      if (data.web_root) opts.web_root = data.web_root
+      ready()
+    })
+  }
+
+  function ready () {
+    var arch = /^\d+$/.test(query.version) ? archive.checkout(Number(query.version)) : archive
+    if (query.viewSource) {
+      debug('view source', query)
+      opts.viewSource = true
     }
+    debug('view', name, 'view dir', name[name.length - 1] === '/')
+    if (name[name.length - 1] === '/') ondirectory(arch, name, req, res, opts)
+    else onfile(arch, name, req, res, opts)
   }
 }
 
