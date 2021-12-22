@@ -1,3 +1,9 @@
+[![deprecated](http://badges.github.io/stability-badges/dist/deprecated.svg)](https://dat-ecosystem.org/) 
+
+More info on active projects and modules at [dat-ecosystem.org](https://dat-ecosystem.org/) <img src="https://i.imgur.com/qZWlO1y.jpg" width="30" height="30" /> 
+
+---
+
 # Hyperdrive Http
 
 Serve a [hyperdrive](https://github.com/mafintosh/hyperdrive) archive over HTTP. For an example of use, see [dat.haus](https://github.com/juliangruber/dat.haus).
