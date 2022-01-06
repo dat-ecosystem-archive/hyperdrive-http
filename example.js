@@ -4,14 +4,14 @@ var hyperdrive = require('hyperdrive')
 var ram = require('random-access-memory')
 var serve = require('.')
 
-var archive = hyperdrive(ram)
+var drive = hyperdrive(ram)
 
-var server = http.createServer(serve(archive, { exposeHeaders: true, live: true }))
+var server = http.createServer(serve(drive, { exposeHeaders: true, live: true }))
 
-archive.writeFile('readme.md', fs.readFileSync('readme.md'))
-archive.writeFile('package.json', fs.readFileSync('package.json'))
-archive.writeFile('index.js', fs.readFileSync('index.js'))
-archive.writeFile('foo/index.html', '<h1>INDEX PAGE YO</h1>')
+drive.writeFile('readme.md', fs.readFileSync('readme.md'))
+drive.writeFile('package.json', fs.readFileSync('package.json'))
+drive.writeFile('index.js', fs.readFileSync('index.js'))
+drive.writeFile('foo/index.html', '<h1>INDEX PAGE YO</h1>')
 
 server.listen(8000)
 

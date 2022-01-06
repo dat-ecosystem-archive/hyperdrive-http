@@ -22,14 +22,14 @@ getDatKey(link, (err, key) => {
 })
 
 function start (key) {
-  var archive = hyperdrive(storage, key, { sparse: true })
-  var server = http.createServer(serve(archive, { live: true }))
+  var drive = hyperdrive(storage, key, { sparse: true })
+  var server = http.createServer(serve(drive, { live: true }))
   server.listen(port)
-  console.log(`Visit http://localhost:${port} to see archive`)
+  console.log(`Visit http://localhost:${port} to see drive`)
 
   if (key) {
-    archive.ready(function () {
-      discovery(archive, { live: true })
+    drive.ready(function () {
+      discovery(drive, { live: true })
     })
   }
 }

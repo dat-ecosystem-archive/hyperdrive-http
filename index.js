@@ -9,56 +9,65 @@ var debug = require('debug')('hyperdrive-http')
 
 module.exports = serve
 
-function serve (archive, opts) {
+function serve (drive, opts) {
   if (!opts) opts = {}
 
-  archive.ready(() => {
-    debug('serving', archive.key.toString('hex'))
+  drive.ready(() => {
+    debug('serving', drive.key.toString('hex'))
   })
 
   return corsify(onrequest)
 
   function onrequest (req, res) {
-    var name = decodeURI(req.url.split('?')[0])
-    var query = qs.parse(req.url.split('?')[1] || '')
-    opts.viewSource = false // reset for each request
-
-    var wait = (query.wait && Number(query.wait.toString())) || 0
-    var have = archive.metadata ? archive.metadata.length : -1
-
-    if (wait <= have) return checkWebroot()
-    waitFor(archive, wait, checkWebroot)
-
-    function checkWebroot () {
-      if (opts.web_root) return ready() // used cached version
-      getManifest(archive, (err, data) => {
-        if (err || !data) return ready()
-        if (data.web_root) opts.web_root = data.web_root
-        ready()
-      })
-    }
-
-    function ready () {
-      var arch = /^\d+$/.test(query.version) ? archive.checkout(Number(query.version)) : archive
-      if (query.viewSource) {
-        debug('view source', query)
-        opts.viewSource = true
-      }
-      debug('view', name, 'view dir', name[name.length - 1] === '/')
-      if (name[name.length - 1] === '/') ondirectory(arch, name, req, res, opts)
-      else onfile(arch, name, req, res, opts)
+    if (req.method === 'GET') {
+      ongetfile(drive, opts, req, res)
+    } else {
+      res.statusCode = 500
+      res.end('illegal method')
     }
   }
 }
 
-function onfile (archive, name, req, res, opts) {
-  archive.stat(name, function (err, st) {
-    if (err) return on404(archive, req, res)
+function ongetfile (drive, opts, req, res) {
+  var name = decodeURI(req.url.split('?')[0])
+  var query = qs.parse(req.url.split('?')[1] || '')
+  opts.viewSource = false // reset for each request
+
+  var wait = (query.wait && Number(query.wait.toString())) || 0
+  var have = drive.metadata ? drive.metadata.length : -1
+
+  if (wait <= have) return checkWebroot()
+  waitFor(drive, wait, checkWebroot)
+
+  function checkWebroot () {
+    if (opts.web_root) return ready() // used cached version
+    getManifest(drive, (err, data) => {
+      if (err || !data) return ready()
+      if (data.web_root) opts.web_root = data.web_root
+      ready()
+    })
+  }
+
+  function ready () {
+    var arch = /^\d+$/.test(query.version) ? drive.checkout(Number(query.version)) : drive
+    if (query.viewSource) {
+      debug('view source', query)
+      opts.viewSource = true
+    }
+    debug('view', name, 'view dir', name[name.length - 1] === '/')
+    if (name[name.length - 1] === '/') ondirectory(arch, name, req, res, opts)
+    else onfile(arch, name, req, res, opts)
+  }
+}
+
+function onfile (drive, name, req, res, opts) {
+  drive.stat(name, function (err, st) {
+    if (err) return on404(drive, req, res)
 
     if (st.isDirectory()) {
       res.statusCode = 302
       res.setHeader('Location', name + '/')
-      ondirectory(archive, name + '/', req, res, opts)
+      ondirectory(drive, name + '/', req, res, opts)
       return
     }
 
@@ -75,42 +84,42 @@ function onfile (archive, name, req, res, opts) {
     }
 
     if (req.method === 'HEAD') return res.end()
-    pump(archive.createReadStream(name, r), res)
+    pump(drive.createReadStream(name, r), res)
   })
 }
 
-function on404 (archive, req, res) {
-  getManifest(archive, function (err, parsed) {
+function on404 (drive, req, res) {
+  getManifest(drive, function (err, parsed) {
     if (err) return onerror(res, 404, err)
 
     var fallbackPage = parsed.fallback_page
 
     if (!fallbackPage) return onerror(res, 404, new Error('Not Found, No Fallback'))
 
-    archive.stat((parsed.web_root || '/') + fallbackPage, function (err) {
+    drive.stat((parsed.web_root || '/') + fallbackPage, function (err) {
       if (err) return onerror(res, 404, err)
-      onfile(archive, fallbackPage, req, res)
+      onfile(drive, fallbackPage, req, res)
     })
   })
 }
 
-function ondirectory (archive, name, req, res, opts) {
+function ondirectory (drive, name, req, res, opts) {
   debug('ondirectory:', name, 'options', opts)
-  if (opts.viewSource) return ondirectoryindex(archive, name, req, res, opts)
+  if (opts.viewSource) return ondirectoryindex(drive, name, req, res, opts)
 
   if (name === '/' && opts.web_root) name = opts.web_root
   if (name[name.length - 1] !== '/') name = name + '/'
-  archive.stat(name + 'index.html', function (err) {
-    if (err) return ondirectoryindex(archive, name, req, res, opts)
-    onfile(archive, name + 'index.html', req, res)
+  drive.stat(name + 'index.html', function (err) {
+    if (err) return ondirectoryindex(drive, name, req, res, opts)
+    onfile(drive, name + 'index.html', req, res)
   })
 }
 
-function ondirectoryindex (archive, name, req, res, opts) {
-  list(archive, name, function (err, entries) {
+function ondirectoryindex (drive, name, req, res, opts) {
+  list(drive, name, function (err, entries) {
     if (err) entries = []
 
-    var wait = archive.metadata ? archive.metadata.length + 1 : 0
+    var wait = drive.metadata ? drive.metadata.length + 1 : 0
     var script = `
       function liveUpdate () {
         var xhr = new XMLHttpRequest()
@@ -132,21 +141,21 @@ function ondirectoryindex (archive, name, req, res, opts) {
       liveUpdate()
     `
 
-    var footer = opts.footer ? 'Archive version: ' + archive.version : null
-    var html = toHTML({ directory: name, script: (!opts.live || archive._checkout) ? null : script, footer: footer }, entries)
+    var footer = opts.footer ? 'Archive version: ' + drive.version : null
+    var html = toHTML({ directory: name, script: (!opts.live || drive._checkout) ? null : script, footer: footer }, entries)
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.setHeader('Content-Length', Buffer.byteLength(html))
     if (opts.exposeHeaders) {
-      res.setHeader('Hyperdrive-Key', archive.key.toString('hex'))
-      res.setHeader('Hyperdrive-Version', archive.version)
+      res.setHeader('Hyperdrive-Key', drive.key.toString('hex'))
+      res.setHeader('Hyperdrive-Version', drive.version)
       res.setHeader('Hyperdrive-Http-Version', pkg.version)
     }
     res.end(html)
   })
 }
 
-function getManifest (archive, cb) {
-  archive.readFile('/dat.json', 'utf-8', function (err, data) {
+function getManifest (drive, cb) {
+  drive.readFile('/dat.json', 'utf-8', function (err, data) {
     if (err) return cb(err)
     try {
       var parsed = JSON.parse(data)
@@ -162,12 +171,12 @@ function getManifest (archive, cb) {
   })
 }
 
-function waitFor (archive, until, cb) { // this feels a bit hacky, TODO: make less complicated?
-  archive.setMaxListeners(0)
-  if (!archive.metadata) archive.once('ready', waitFor.bind(null, archive, until, cb))
-  if (archive.metadata.length >= until) return cb()
-  archive.metadata.setMaxListeners(0)
-  archive.metadata.update(waitFor.bind(null, archive, until, cb))
+function waitFor (drive, until, cb) { // this feels a bit hacky, TODO: make less complicated?
+  drive.setMaxListeners(0)
+  if (!drive.metadata) drive.once('ready', waitFor.bind(null, drive, until, cb))
+  if (drive.metadata.length >= until) return cb()
+  drive.metadata.setMaxListeners(0)
+  drive.metadata.update(waitFor.bind(null, drive, until, cb))
 }
 
 function onerror (res, status, err) {
@@ -178,8 +187,8 @@ function onerror (res, status, err) {
   res.end(err.stack)
 }
 
-function list (archive, name, cb) {
-  archive.readdir(name, function (err, names) {
+function list (drive, name, cb) {
+  drive.readdir(name, function (err, names) {
     if (err) return cb(err)
 
     var error = null
@@ -190,7 +199,7 @@ function list (archive, name, cb) {
     for (var i = 0; i < names.length; i++) stat(name + names[i], names[i])
 
     function stat (name, base) {
-      archive.stat(name, function (err, st) {
+      drive.stat(name, function (err, st) {
         if (err) error = err
 
         if (st) {
